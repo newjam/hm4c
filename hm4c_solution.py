@@ -5,9 +5,6 @@ from string import printable
 from functools import partial
 from itertools import count, islice, izip, tee, takewhile, imap
 
-def f(c, i = 0):
-  return base64.b64encode(c + '\x00' * i)
-
 def get_digest_from_tube(io, x):
   io.recvuntil('Quit\n')
   io.sendline('1')
