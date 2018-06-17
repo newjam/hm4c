@@ -36,15 +36,18 @@ def main():
   #io = process(['python',  'hm4c.py'])
   get_digest = partial(get_digest_from_tube, io)
 
-  curr, prev = tee(matches(get_digest))
-  prev       = islice(prev, 1, None)
-  not_equal  = lambda (x, y): x != y
-  second     = lambda (x, y): y
+  curr_i, prev_i = tee(matches(get_digest))
+  prev_i         = islice(prev_i, 1, None)
 
   # keep printing the partial flag until we have found the entire flag
   progress = log.progress('Finding flag')
-  for x in imap(second, takewhile(not_equal, izip(curr, prev))):
-    progress.status(x)
+  for prev, curr in izip(curr_i, prev_i):
+    if prev == curr:
+      progress.success(curr)
+      break
+    else:
+      progress.status(curr)
+
 
 def from_int(i):
   ''' inverse of the to_int function on the server '''
