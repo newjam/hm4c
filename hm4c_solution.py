@@ -1,4 +1,4 @@
-from pwn import process, remote
+from pwn import process, remote, context, log
 from base64 import b64encode
 from hashlib import sha256
 from string import printable
@@ -6,7 +6,8 @@ from functools import partial
 from itertools import count, islice, izip, tee, takewhile, imap
 
 def get_digest_from_tube(io, x):
-  io.recvuntil('Quit\n')
+  io.recvuntil('Quit')
+  io.recvline()
   io.sendline('1')
   io.recvline()
   io.sendline(b64encode(x))
@@ -28,9 +29,11 @@ def matches(get_digest):
       yield from_int(key)
 
 def main(): 
-  print('Starting to pwn')
-  # io = remote('crypto.midnightsunctf.se', 31337)
-  io = process(['python',  'hm4c.py'])
+  log.info('Starting to pwn')
+  #context.log_level = 'debug'
+  #io = remote('crypto.midnightsunctf.se', 31337)
+  io = remote('127.0.0.1', 31337)
+  #io = process(['python',  'hm4c.py'])
   get_digest = partial(get_digest_from_tube, io)
 
   curr, prev = tee(matches(get_digest))
@@ -39,14 +42,15 @@ def main():
   second     = lambda (x, y): y
 
   # keep printing the partial flag until we have found the entire flag
+  progress = log.progress('Finding flag')
   for x in imap(second, takewhile(not_equal, izip(curr, prev))):
-    print(x)
+    progress.status(x)
 
 def from_int(i):
-    ''' inverse of the to_int function on the server '''
-    h = hex(i)[2:]
-    h = h if len(h) % 2 == 0 else '0' + h
-    return h.decode('hex')
+  ''' inverse of the to_int function on the server '''
+  h = hex(i)[2:]
+  h = h if len(h) % 2 == 0 else '0' + h
+  return h.decode('hex')
 
 if __name__ == "__main__":
   main()
